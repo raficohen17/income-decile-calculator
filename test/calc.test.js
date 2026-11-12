@@ -108,3 +108,43 @@ test('study fund lowers total only when payslip deductions are on', () => {
   assert.equal(cbs.studySum, 250);
   near(cbs.total - payslip.total, 1200 + 250);
 });
+
+test('direct taxes: worked example sums NI and health, no income tax', () => {
+  const r = c.calcHousehold(household({ kids: { g0: 0, g12: 0, g3: 0, g45: 1, g617: 1 },
+    adults: [adult({ salary: 14000 }), adult({ gender: 'm', salary: 11000 })] }));
+  const t = r.taxes;
+  assert.equal(t.tax, 0);
+  near(t.total, (14000 - 12904.73) + (11000 - 10269.84), 0.02);
+  assert.equal(t.grossWages, 25000);
+  near(t.rateOfWages, t.total / 25000);
+  near(t.grossIncome, r.total + t.total);
+  near(t.rateOfIncome, t.total / (25000 + 392));
+});
+
+test('direct taxes ignore net-mode wages and flag them', () => {
+  const r = c.calcHousehold(household({ adults: [adult({ salary: 20000 }), adult({ gender: 'm', mode: 'net', salary: 9000 })] }));
+  assert.equal(r.taxes.grossWages, 20000);
+  assert.equal(r.taxes.netModeWages, true);
+  near(r.taxes.total, r.people[0].tax + r.people[0].ni + r.people[0].health);
+});
+
+test('direct taxes with no gross wages are zero, no division by zero', () => {
+  const t = c.directTaxes([{ netMode: true, net: 0 }], 0);
+  assert.equal(t.total, 0);
+  assert.equal(t.rateOfWages, 0);
+  assert.equal(t.rateOfIncome, 0);
+});
+
+test('direct taxes are unaffected by the payslip deduction setting', () => {
+  const base = household({ adults: [adult({ salary: 30000, study: true }), adult({ gender: 'm', salary: 0 })] });
+  const a = c.calcHousehold(base).taxes, b = c.calcHousehold(Object.assign({}, base, { deductPension: true })).taxes;
+  near(a.rateOfIncome, b.rateOfIncome);
+});
+
+test('take-home net subtracts employee pension and study fund regardless of setting', () => {
+  const base = household({ adults: [adult({ salary: 10000, study: true }), adult({ gender: 'm', salary: 10000 })] });
+  const cbs = c.calcHousehold(base), payslip = c.calcHousehold(Object.assign({}, base, { deductPension: true }));
+  near(cbs.total - cbs.takeHome, 1200 + 250);
+  near(cbs.takeHome, payslip.takeHome);
+  near(payslip.total, payslip.takeHome);
+});

@@ -103,12 +103,24 @@ th,td{padding:7px 8px;text-align:start;border-bottom:1px solid var(--line);white
 th{font-weight:500;color:var(--muted);font-size:13px}
 td.v,th.v{text-align:end}
 tr.tot td{font-weight:700;border-bottom:0}
+tr.wrap td{white-space:normal;color:var(--muted)}
+tr.wrap td.v{white-space:nowrap;vertical-align:top}
+@media (max-width:520px){#tbl th,#tbl td{padding:6px 4px;font-size:13px}#tbl td:first-child{white-space:normal}}
 details{margin-top:12px}
 summary{cursor:pointer;font-weight:500;padding:4px 0}
 .small{font-size:13.5px;color:var(--muted)}
 .small ul{padding-inline-start:20px;margin:6px 0}
 .small a{color:var(--accent)}
 .scale td,.scale th{padding:5px 8px}
+.taxes{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--field);border:1px solid var(--line)}
+.taxes h3{font-size:14px;color:var(--muted);font-weight:500;margin-bottom:4px}
+.taxes .tx-big{font-size:14px;color:var(--muted)}
+.taxes .tx-big b{font:600 22px var(--f-num);color:var(--ink);font-variant-numeric:tabular-nums}
+.taxes .tx-rates{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:4px;font-size:14px;color:var(--muted)}
+.taxes .tx-rates b{font:600 16px var(--f-num);color:var(--accent)}
+.taxes .tx-tbl{margin-top:8px;font-size:13.5px}
+.taxes .tx-tbl td{padding:4px 0}
+.taxes .hint{margin-top:8px}
 .privacy{margin-top:22px;font-size:13px;color:var(--muted);text-align:center}
 .bar{display:none}
 @media (max-width:919px){
@@ -198,6 +210,7 @@ summary{cursor:pointer;font-weight:500;padding:4px 0}
         <div class="ladder" id="ladder"></div>
         <p class="ladder-cap">גבול עליון של כל עשירון, באלפי ₪ נטו לנפש תקנית. בעשירון 10 מוצג הגבול התחתון.</p>
         <p class="gap" id="gapTxt"></p>
+        <div class="taxes" id="taxes"></div>
         <div class="tbl"><table id="tbl"></table></div>
         <details>
           <summary>איך זה מחושב</summary>

@@ -27,6 +27,20 @@ function calcPerson(a,single,kids,totalKids){
   var nh=niHealth(g);
   return{netMode:false,gross:g,tax:tax,ni:nh.ni,health:nh.health,net:g-tax-nh.ni-nh.health,points:points,pension:pension,study:study};
 }
+// Direct taxes on wages (income tax, NI, health) as a share of gross wages and of all household income before them.
+// netIncome is household income after these taxes, before any savings deductions.
+function directTaxes(people,netIncome){
+  var t={tax:0,ni:0,health:0,grossWages:0,netModeWages:false};
+  people.forEach(function(p){
+    if(p.netMode){if(p.net>0)t.netModeWages=true;return;}
+    t.tax+=p.tax;t.ni+=p.ni;t.health+=p.health;t.grossWages+=p.gross;
+  });
+  t.total=t.tax+t.ni+t.health;
+  t.grossIncome=netIncome+t.total;
+  t.rateOfWages=t.grossWages?t.total/t.grossWages:0;
+  t.rateOfIncome=t.grossIncome?t.total/t.grossIncome:0;
+  return t;
+}
 function calcHousehold(inp){
   var kidsTotal=0;KID_KEYS.forEach(function(k){kidsTotal+=inp.kids[k]||0;});
   var single=!inp.couple,nAdults=single?1:2;
@@ -35,16 +49,18 @@ function calcHousehold(inp){
   var salaryNet=0,pensionSum=0,studySum=0;people.forEach(function(p){salaryNet+=p.net;pensionSum+=p.pension;studySum+=p.study;});
   var child=inp.autoChild?childAllowance(kidsTotal):inp.childManual;
   var other=child+inp.allowances+inp.pensionIncome+inp.capital+inp.other;
-  var total=salaryNet-(inp.deductPension?pensionSum+studySum:0)+other;
+  var takeHome=salaryNet-pensionSum-studySum+other; // what reaches the bank account
+  var total=inp.deductPension?takeHome:salaryNet+other;
   var pc=std?total/std:0;
   var f=1+inp.adjPct/100,thr=DECILE_UPPER.map(function(x){return x*f;});
   var d=10;for(var j=0;j<thr.length;j++){if(pc<=thr[j]){d=j+1;break;}}
-  return{kidsTotal:kidsTotal,persons:persons,std:std,people:people,salaryNet:salaryNet,pensionSum:pensionSum,studySum:studySum,child:child,other:other,total:total,pc:pc,thr:thr,decile:d};
+  var tx=directTaxes(people,salaryNet+other);
+  return{taxes:tx,kidsTotal:kidsTotal,persons:persons,std:std,people:people,salaryNet:salaryNet,pensionSum:pensionSum,studySum:studySum,child:child,other:other,total:total,takeHome:takeHome,pc:pc,thr:thr,decile:d};
 }
 //CALC-END
 
 if(typeof module!=='undefined'&&module.exports){
-  module.exports={stdPersons:stdPersons,taxBeforeCredits:taxBeforeCredits,niHealth:niHealth,childAllowance:childAllowance,calcPerson:calcPerson,calcHousehold:calcHousehold};
+  module.exports={directTaxes:directTaxes,stdPersons:stdPersons,taxBeforeCredits:taxBeforeCredits,niHealth:niHealth,childAllowance:childAllowance,calcPerson:calcPerson,calcHousehold:calcHousehold};
 }
 
 if(typeof document!=='undefined')(function(){
@@ -84,6 +100,21 @@ function readInputs(){
     adjPct:Math.max(-99,Math.min(MAX_PCT,finite($('#adj').value))),deductPension:$('#deductPension').checked};
 }
 
+function pct(x){return (x*100).toFixed(1).replace(/\.0$/,'')+'%';}
+function renderTaxes(t){
+  var h;
+  if(t.grossWages<=0){
+    h='<h3>מסים ישירים</h3><p class="hint">אין שכר ברוטו בחישוב. כדי לקבל הערכה, הזינו שכר ברוטו.</p>';
+  }else{
+    h='<h3>מסים ישירים מההכנסה, הערכה</h3>'+
+      '<div class="tx-big"><b>₪'+fmt(t.total)+'</b> בחודש · ₪'+fmt(t.total*12)+' בשנה</div>'+
+      '<div class="tx-rates"><span><b>'+pct(t.rateOfWages)+'</b> מהשכר ברוטו</span><span><b>'+pct(t.rateOfIncome)+'</b> מכלל ההכנסות לפני מס</span></div>'+
+      '<table class="tx-tbl"><tr><td>מס הכנסה</td><td class="v">₪'+fmt(t.tax)+'</td></tr><tr><td>ביטוח לאומי</td><td class="v">₪'+fmt(t.ni)+'</td></tr><tr><td>ביטוח בריאות</td><td class="v">₪'+fmt(t.health)+'</td></tr></table>'+
+      '<p class="hint">רק מסים על השכר. לא כולל מס על הכנסות שהוזנו נטו (הון, פנסיה'+(t.netModeWages?', שכר שהוזן כנטו':'')+') ולא מסים על הוצאות כמו מע״מ.</p>';
+  }
+  $('#taxes').innerHTML=h;
+}
+
 function render(){
   var inp=readInputs(),r=calcHousehold(inp);
   $('#kidsTotal').textContent=r.kidsTotal;
@@ -108,6 +139,7 @@ function render(){
   else{g='משק הבית מעל הגבול של עשירון 9 (₪'+fmt(r.thr[8])+' לנפש תקנית).';}
   if(r.decile>1){var dn=(r.pc-r.thr[r.decile-2])*r.std;g+=' ירידה של כ-₪'+fmt(dn)+' בחודש מורידה לעשירון '+(r.decile-1)+'.';}
   $('#gapTxt').innerHTML=g;
+  renderTaxes(r.taxes);
 
   var n=inp.couple?2:1,P=r.people;
   var head='<tr><th></th>'+P.slice(0,n).map(function(_,i){return '<th class="v">'+(n===2?(i?'ב':'א'):'שכר')+'</th>';}).join('')+(n===2?'<th class="v">סה״כ</th>':'')+'</tr>';
@@ -126,6 +158,7 @@ function render(){
   }
   rows+=kv('קצבאות והכנסות נוספות','+'+fmt(r.other));
   rows+=kv('הכנסה נטו למשק הבית','₪'+fmt(r.total),'tot');
+  if(!inp.deductPension)rows+=kv('נטו למשק הבית אחרי הפרשות העובד לפנסיה ולקרן השתלמות','₪'+fmt(r.takeHome),'wrap');
   rows+=kv('נפשות בבית',r.persons)+kv('נפשות תקניות',r.std.toFixed(2).replace(/\.?0+$/,''))+kv('נטו לנפש תקנית','₪'+fmt(r.pc),'tot');
   $('#tbl').innerHTML=rows;
 }
