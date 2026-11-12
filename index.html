@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="מחשבון הכנסה נטו לנפש תקנית ועשירון הכנסה של משק הבית, בשיטת הלמ״ס. החישוב מתבצע בדפדפן בלבד.">
+<meta name="theme-color" content="#F3F5F9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B111A" media="(prefers-color-scheme: dark)">
+<title>מחשבון עשירון הכנסה</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231F4FD8'/%3E%3Crect x='6' y='18' width='4' height='8' fill='%23fff'/%3E%3Crect x='14' y='12' width='4' height='14' fill='%23fff'/%3E%3Crect x='22' y='6' width='4' height='20' fill='%23F0A81B'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Rubik:wght@500;600&display=swap">
+<style>
+/* Layout: form on the right, sticky result panel on the left (RTL); on phones the result panel follows the form and a live summary bar sits at the bottom. */
+:root{
+  --bg:#F3F5F9; --surface:#FFFFFF; --ink:#0F1B2D; --muted:#566377; --line:#D8DEE8;
+  --accent:#1F4FD8; --accent-ink:#FFFFFF; --accent-soft:#E3EAFC;
+  --mark:#F0A81B; --mark-ink:#2B1D00; --field:#F8FAFC; --danger:#B42318;
+  --f-body:Heebo,"Segoe UI",system-ui,sans-serif; --f-num:Rubik,Heebo,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B111A; --surface:#141C28; --ink:#E7ECF4; --muted:#9AA7BA; --line:#263244;
+    --accent:#7E9DFF; --accent-ink:#0B1330; --accent-soft:#1A2547;
+    --mark:#F2B84B; --mark-ink:#2B1D00; --field:#0F1621; --danger:#FF8A7A; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B111A; --surface:#141C28; --ink:#E7ECF4; --muted:#9AA7BA; --line:#263244;
+  --accent:#7E9DFF; --accent-ink:#0B1330; --accent-soft:#1A2547;
+  --mark:#F2B84B; --mark-ink:#2B1D00; --field:#0F1621; --danger:#FF8A7A; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--f-body);
+  padding-block:20px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+[hidden]{display:none!important}
+.wrap{max-width:1100px;margin-inline:auto}
+h1,h2,h3{font-family:var(--f-num);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(26px,5vw,38px);line-height:1.15}
+h2{font-size:18px}
+.lead{color:var(--muted);max-width:62ch;margin:8px 0 0}
+.example{display:inline-block;margin-top:12px;font-size:13px;padding:3px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.layout{display:grid;gap:18px;margin-top:20px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:920px){.layout{grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);align-items:start}
+  .results{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+.card>h2{margin-bottom:12px}
+.hint{color:var(--muted);font-size:13.5px;margin:6px 0 0}
+fieldset{border:0;padding:0;margin:0;min-width:0}
+legend{padding:0;font-size:14px;color:var(--muted);margin-bottom:6px}
+label.lbl{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+.row{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--field)}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:block;padding:8px 14px;font-size:14.5px;border-inline-start:1px solid var(--line)}
+.seg label:first-child span{border-inline-start:0}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink);font-weight:500}
+.seg input:focus-visible+span{outline:2px solid var(--mark);outline-offset:-3px}
+input[type=number]{width:100%;font:500 16px var(--f-num);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:9px 12px;-moz-appearance:textfield;appearance:textfield;font-variant-numeric:tabular-nums}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.unit{position:relative}
+.unit input{padding-inline-start:30px}
+.unit::before{content:"₪";position:absolute;inset-inline-start:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+.unit.pct::before{content:"%"}
+.kids{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.kid{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:6px;padding-inline-start:12px;background:var(--field)}
+.kid span.t{font-size:14.5px}
+.stepper{display:flex;align-items:center;gap:2px}
+.stepper button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 18px var(--f-num);cursor:pointer;line-height:1;touch-action:manipulation}
+.stepper button:hover{background:var(--accent-soft)}
+.stepper output{min-width:28px;text-align:center;font:600 16px var(--f-num);font-variant-numeric:tabular-nums}
+.adult{border-top:1px dashed var(--line);padding-top:14px;margin-top:14px}
+.adult:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.adult h3{font-size:15px;margin-bottom:10px;color:var(--accent)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:14.5px}
+.check input{margin-top:5px;accent-color:var(--accent)}
+.note{border-inline-start:3px solid var(--mark);padding:8px 12px;background:var(--field);border-radius:8px;border-start-start-radius:0;border-end-start-radius:0;font-size:14px;color:var(--muted)}
+.note b{color:var(--ink)}
+/* results */
+.big{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.big .n{font:600 72px/0.9 var(--f-num);color:var(--accent)}
+.big .cap{font-size:14px;color:var(--muted);padding-bottom:6px}
+.big .cap b{display:block;font:600 22px var(--f-num);color:var(--ink);font-variant-numeric:tabular-nums}
+.ladder{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;margin-top:16px;direction:ltr}
+.cell{border-radius:6px;background:var(--accent-soft);padding:6px 0 5px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
+.cell b{display:block;font:600 15px var(--f-num);color:var(--ink)}
+.cell i{display:block;font-style:normal;font-size:10.5px;line-height:1.2}
+.cell.on{background:var(--mark);color:var(--mark-ink)}
+.cell.on b{color:var(--mark-ink)}
+.ladder-cap{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.gap{margin:14px 0 0;font-size:15px}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;text-align:start;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:500;color:var(--muted);font-size:13px}
+td.v,th.v{text-align:end}
+tr.tot td{font-weight:700;border-bottom:0}
+details{margin-top:12px}
+summary{cursor:pointer;font-weight:500;padding:4px 0}
+.small{font-size:13.5px;color:var(--muted)}
+.small ul{padding-inline-start:20px;margin:6px 0}
+.small a{color:var(--accent)}
+.scale td,.scale th{padding:5px 8px}
+.privacy{margin-top:22px;font-size:13px;color:var(--muted);text-align:center}
+.bar{display:none}
+@media (max-width:919px){
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .bar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--surface);border-top:1px solid var(--line);
+    padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .bar .d{font:600 26px var(--f-num);color:var(--accent);line-height:1}
+  .bar .d small{font:400 12px var(--f-body);color:var(--muted);display:block;margin-bottom:2px}
+  .bar .p{font:600 17px var(--f-num);text-align:end;font-variant-numeric:tabular-nums}
+  .bar .p small{font:400 12px var(--f-body);color:var(--muted);display:block}
+}
+@media (prefers-reduced-motion:no-preference){.cell{transition:background .2s}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>מחשבון עשירון הכנסה</h1>
+    <p class="lead">מזינים מבנה משפחתי, שכר וקצבאות, ומקבלים את ההכנסה נטו לנפש תקנית ואת העשירון, בשיטה של הלשכה המרכזית לסטטיסטיקה.</p>
+    <span class="example">הערכים בטופס הם דוגמה. החליפו אותם בנתונים שלכם.</span>
+  </header>
+
+  <div class="layout">
+    <div class="col">
+      <section class="card" aria-labelledby="h-fam">
+        <h2 id="h-fam">מבנה משפחתי</h2>
+        <fieldset>
+          <legend>מצב משפחתי</legend>
+          <div class="seg">
+            <label><input type="radio" name="status" value="couple" checked><span>נשואים / ידועים בציבור</span></label>
+            <label><input type="radio" name="status" value="single"><span>רווק/ה, גרוש/ה או אלמן/ה</span></label>
+          </div>
+        </fieldset>
+        <fieldset style="margin-top:16px">
+          <legend>ילדים מתחת לגיל 18, לפי גיל בשנת המס 2026</legend>
+          <div class="kids" id="kids"></div>
+          <p class="hint">סך הכל <b id="kidsTotal">0</b> ילדים. הגיל משפיע על נקודות הזיכוי במס, ועל קצבת הילדים. בסולם הלמ״ס כל ילד נספר כנפש אחת.</p>
+        </fieldset>
+        <div style="margin-top:14px" class="kid">
+          <span class="t">נפשות נוספות בבית (בני 18 ומעלה, הורים מבוגרים)</span>
+          <div class="stepper" data-step="extra"><button type="button" data-dir="-1" aria-label="הפחת נפש נוספת">−</button><output aria-live="polite">0</output><button type="button" data-dir="1" aria-label="הוסף נפש נוספת">+</button></div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-work">
+        <h2 id="h-work">הכנסה מעבודה, לחודש</h2>
+        <div id="adults"></div>
+        <p class="hint">בהזנת ברוטו, המס, הביטוח הלאומי והבריאות מחושבים לפי נתוני 2026. בהזנת נטו, הסכום נכנס כמו שהוא.</p>
+      </section>
+
+      <section class="card" aria-labelledby="h-other">
+        <h2 id="h-other">קצבאות והכנסות נוספות, נטו לחודש</h2>
+        <div class="stack">
+          <div>
+            <label class="check"><input type="checkbox" id="autoChild" checked><span>לחשב קצבת ילדים אוטומטית לפי מספר הילדים: <b id="childAuto">0</b> ₪</span></label>
+            <div id="childManualWrap" hidden style="margin-top:8px"><label class="lbl" for="childManual">קצבת ילדים</label><div class="unit"><input type="number" inputmode="decimal" id="childManual" min="0" step="10" value="0"></div></div>
+          </div>
+          <div class="row">
+            <div><label class="lbl" for="allow">קצבאות אחרות של הביטוח הלאומי</label><div class="unit"><input type="number" inputmode="decimal" id="allow" min="0" step="10" value="0"></div></div>
+            <div><label class="lbl" for="pens">פנסיה או קצבה מקופת גמל (פורשים)</label><div class="unit"><input type="number" inputmode="decimal" id="pens" min="0" step="10" value="0"></div></div>
+            <div><label class="lbl" for="cap">הכנסה מהון (שכר דירה, ריבית)</label><div class="unit"><input type="number" inputmode="decimal" id="cap" min="0" step="10" value="0"></div></div>
+            <div><label class="lbl" for="oth">הכנסה אחרת (מזונות, סיוע קבוע)</label><div class="unit"><input type="number" inputmode="decimal" id="oth" min="0" step="10" value="0"></div></div>
+          </div>
+          <div class="note"><b>מה לגבי פנסיה?</b> קצבת פנסיה שמתקבלת בפועל נחשבת הכנסה ונכנסת לחישוב. הפרשות לפנסיה מהשכר, של העובד ושל המעסיק, אינן הכנסה שוטפת והלמ״ס לא מנכה אותן מהנטו. אפשר לשנות זאת בהגדרות.</div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-set">
+        <h2 id="h-set">הגדרות</h2>
+        <div class="stack">
+          <label class="check"><input type="checkbox" id="deductPension"><span>לנכות הפרשת עובד לפנסיה מהנטו (נטו לפי תלוש השכר). ברירת המחדל היא שיטת הלמ״ס, בלי ניכוי.</span></label>
+          <div style="max-width:240px"><label class="lbl" for="adj">עדכון גבולות העשירונים</label><div class="unit pct"><input type="number" inputmode="decimal" id="adj" step="0.5" value="0"></div></div>
+          <p class="hint" style="margin:0">הגבולות מבוססים על סקר 2024. כדי להשוות להכנסות של 2026 אפשר להעלות אותם באחוזים, למשל לפי עליית השכר הממוצע או המדד מאז 2024.</p>
+        </div>
+      </section>
+    </div>
+
+    <aside class="col results" aria-labelledby="h-res">
+      <section class="card" id="res">
+        <h2 id="h-res" hidden>תוצאה</h2>
+        <div class="big" aria-live="polite" aria-atomic="true">
+          <div class="n" id="dec">–</div>
+          <div class="cap">עשירון<b id="pcOut">–</b>נטו לנפש תקנית בחודש</div>
+        </div>
+        <div class="ladder" id="ladder"></div>
+        <p class="ladder-cap">גבול עליון של כל עשירון, באלפי ₪ נטו לנפש תקנית. בעשירון 10 מוצג הגבול התחתון.</p>
+        <p class="gap" id="gapTxt"></p>
+        <div class="tbl"><table id="tbl"></table></div>
+        <details>
+          <summary>איך זה מחושב</summary>
+          <div class="small">
+            <p><b>1. נפשות תקניות.</b> סופרים את כל הנפשות בבית ומתרגמים לנפשות תקניות לפי סולם הלמ״ס, שנותן משקל פוחת לכל נפש נוספת.</p>
+            <div class="tbl"><table class="scale" id="scale"></table></div>
+            <p><b>2. הכנסה נטו.</b> שכר ברוטו פחות מס הכנסה, ביטוח לאומי וביטוח בריאות, ועוד קצבאות, פנסיה והכנסות נוספות שמתקבלות בפועל.</p>
+            <p><b>3. נטו לנפש תקנית.</b> ההכנסה נטו של כל הבית מחולקת במספר הנפשות התקניות.</p>
+            <p><b>4. עשירון.</b> משווים לגבולות העשירונים של משקי הבית.</p>
+          </div>
+        </details>
+        <details>
+          <summary>הנחות ומגבלות</summary>
+          <div class="small">
+            <ul>
+              <li>גבולות העשירונים מתפרסמים על ידי הלמ״ס למשקי בית שבראשם שכיר, בערך 70% ממשקי הבית. המקור כאן הוא סקר הוצאות משק הבית 2024, כפי שפורסם בתקשורת. התוצאה היא קירוב לדירוג של כלל משקי הבית.</li>
+              <li>חישוב המס הוא אומדן לשכיר תושב ישראל: מדרגות 2026 אחרי הריווח, נקודת זיכוי של 242 ₪, וזיכוי של 35% על הפרשת עובד לפנסיה עד התקרה. הוא לא כולל תיאום מס, הטבות ליישוב מוטב, הכנסות עצמאיות, מס על הכנסות הון או שווי רכב.</li>
+              <li>הכנסות שאינן שכר (קצבאות, פנסיה, הון) מוזנות נטו, כפי שהן מגיעות לחשבון.</li>
+              <li>הלמ״ס מדרג לפי הכנסה כספית. שווי השימוש בדירה או ברכב בבעלות לא נכלל.</li>
+              <li>הלמ״ס עצמו משתמש בנתוני מס ובדיווחי ביטוח לאומי אמיתיים, לכן התוצאה כאן היא הערכה ולא מספר רשמי.</li>
+            </ul>
+            <p>מקורות:</p>
+            <ul>
+              <li><a rel="noopener noreferrer" href="https://www.cbs.gov.il/he/mediarelease/DocLib/2026/001/15_26_001b.pdf">הלמ״ס, ממצאי סקר הוצאות משק הבית</a></li>
+              <li><a rel="noopener noreferrer" href="https://www.haifa.muni.il/wp-content/uploads/2026/04/%D7%A8%D7%9E%D7%AA-%D7%97%D7%99%D7%99%D7%9D-2025.pdf">הגדרות הלמ״ס, סולם נפשות סטנדרטיות</a></li>
+              <li><a rel="noopener noreferrer" href="https://www.bizportal.co.il/financialconsumerism/news/article/20044708">ביזפורטל, גבולות העשירונים לפי סקר 2024</a></li>
+              <li><a rel="noopener noreferrer" href="https://www.kolzchut.org.il/he/%D7%9E%D7%93%D7%A8%D7%92%D7%95%D7%AA_%D7%9E%D7%A1_%D7%94%D7%9B%D7%A0%D7%A1%D7%94">כל זכות, מדרגות מס הכנסה 2026</a></li>
+              <li><a rel="noopener noreferrer" href="https://fs.knesset.gov.il/globaldocs/MMM/a4622f6b-9905-f111-a13e-005056aa7c52/2_a4622f6b-9905-f111-a13e-005056aa7c52_11_21431.pdf">מרכז המחקר של הכנסת, נקודות זיכוי לילדים 2026</a></li>
+              <li><a rel="noopener noreferrer" href="https://www.btl.gov.il/Insurance/Rates/Pages/%D7%9C%D7%A2%D7%95%D7%91%D7%93%D7%99%D7%9D%20%D7%A9%D7%9B%D7%99%D7%A8%D7%99%D7%9D.aspx">ביטוח לאומי, שיעורי דמי ביטוח לשכירים</a></li>
+              <li><a rel="noopener noreferrer" href="https://www.btl.gov.il/About/news/Pages/ArchiveFolder/2026/hadasaidkonkitzva2026.aspx">ביטוח לאומי, קצבת ילדים 2026</a></li>
+            </ul>
+          </div>
+        </details>
+      </section>
+    </aside>
+  </div>
+
+  <p class="privacy">הנתונים שמוזנים לא נשמרים ולא נשלחים לשום מקום. כל החישוב מתבצע בדפדפן שלכם.</p>
+</div>
+
+<div class="bar" aria-hidden="true">
+  <div class="d"><small>עשירון</small><span id="barDec">–</span></div>
+  <div class="p"><small>נטו לנפש תקנית</small><span id="barPc">–</span></div>
+</div>
+
+<noscript><p class="privacy">המחשבון דורש JavaScript.</p></noscript>
+<script src="app.js"></script>
+</body>
+</html>

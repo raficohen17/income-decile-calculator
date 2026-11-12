@@ -1,0 +1,6 @@
+{
+  "name": "income-decile-calculator",
+  "private": true,
+  "description": "Israeli household income decile calculator (CBS method), static page",
+  "scripts": { "test": "node --test test/" }
+}
