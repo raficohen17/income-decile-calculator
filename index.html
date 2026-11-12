@@ -103,6 +103,9 @@ th,td{padding:7px 8px;text-align:start;border-bottom:1px solid var(--line);white
 th{font-weight:500;color:var(--muted);font-size:13px}
 td.v,th.v{text-align:end}
 tr.tot td{font-weight:700;border-bottom:0}
+tr.wrap td{white-space:normal;color:var(--muted)}
+tr.wrap td.v{white-space:nowrap;vertical-align:top}
+@media (max-width:520px){#tbl th,#tbl td{padding:6px 4px;font-size:13px}#tbl td:first-child{white-space:normal}}
 details{margin-top:12px}
 summary{cursor:pointer;font-weight:500;padding:4px 0}
 .small{font-size:13.5px;color:var(--muted)}

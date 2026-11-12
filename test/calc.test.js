@@ -140,3 +140,11 @@ test('direct taxes are unaffected by the payslip deduction setting', () => {
   const a = c.calcHousehold(base).taxes, b = c.calcHousehold(Object.assign({}, base, { deductPension: true })).taxes;
   near(a.rateOfIncome, b.rateOfIncome);
 });
+
+test('take-home net subtracts employee pension and study fund regardless of setting', () => {
+  const base = household({ adults: [adult({ salary: 10000, study: true }), adult({ gender: 'm', salary: 10000 })] });
+  const cbs = c.calcHousehold(base), payslip = c.calcHousehold(Object.assign({}, base, { deductPension: true }));
+  near(cbs.total - cbs.takeHome, 1200 + 250);
+  near(cbs.takeHome, payslip.takeHome);
+  near(payslip.total, payslip.takeHome);
+});

@@ -49,12 +49,13 @@ function calcHousehold(inp){
   var salaryNet=0,pensionSum=0,studySum=0;people.forEach(function(p){salaryNet+=p.net;pensionSum+=p.pension;studySum+=p.study;});
   var child=inp.autoChild?childAllowance(kidsTotal):inp.childManual;
   var other=child+inp.allowances+inp.pensionIncome+inp.capital+inp.other;
-  var total=salaryNet-(inp.deductPension?pensionSum+studySum:0)+other;
+  var takeHome=salaryNet-pensionSum-studySum+other; // what reaches the bank account
+  var total=inp.deductPension?takeHome:salaryNet+other;
   var pc=std?total/std:0;
   var f=1+inp.adjPct/100,thr=DECILE_UPPER.map(function(x){return x*f;});
   var d=10;for(var j=0;j<thr.length;j++){if(pc<=thr[j]){d=j+1;break;}}
   var tx=directTaxes(people,salaryNet+other);
-  return{taxes:tx,kidsTotal:kidsTotal,persons:persons,std:std,people:people,salaryNet:salaryNet,pensionSum:pensionSum,studySum:studySum,child:child,other:other,total:total,pc:pc,thr:thr,decile:d};
+  return{taxes:tx,kidsTotal:kidsTotal,persons:persons,std:std,people:people,salaryNet:salaryNet,pensionSum:pensionSum,studySum:studySum,child:child,other:other,total:total,takeHome:takeHome,pc:pc,thr:thr,decile:d};
 }
 //CALC-END
 
@@ -157,6 +158,7 @@ function render(){
   }
   rows+=kv('קצבאות והכנסות נוספות','+'+fmt(r.other));
   rows+=kv('הכנסה נטו למשק הבית','₪'+fmt(r.total),'tot');
+  if(!inp.deductPension)rows+=kv('נטו למשק הבית אחרי הפרשות העובד לפנסיה ולקרן השתלמות','₪'+fmt(r.takeHome),'wrap');
   rows+=kv('נפשות בבית',r.persons)+kv('נפשות תקניות',r.std.toFixed(2).replace(/\.?0+$/,''))+kv('נטו לנפש תקנית','₪'+fmt(r.pc),'tot');
   $('#tbl').innerHTML=rows;
 }
