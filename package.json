@@ -2,5 +2,8 @@
   "name": "income-decile-calculator",
   "private": true,
   "description": "Israeli household income decile calculator (CBS method), static page",
-  "scripts": { "test": "node --test test/" }
+  "scripts": {
+    "test": "node --test test/",
+    "bump": "V=$(shasum -a 256 app.js | cut -c1-10) && sed -i '' -E \"s|app\\.js\\?v=[0-9a-f]+|app.js?v=$V|\" index.html"
+  }
 }
