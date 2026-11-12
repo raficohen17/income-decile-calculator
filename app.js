@@ -158,7 +158,7 @@ function render(){
   }
   rows+=kv('קצבאות והכנסות נוספות','+'+fmt(r.other));
   rows+=kv('הכנסה נטו למשק הבית','₪'+fmt(r.total),'tot');
-  if(!inp.deductPension)rows+=kv('נטו למשק הבית אחרי הפרשות העובד לפנסיה ולקרן השתלמות','₪'+fmt(r.takeHome),'wrap');
+  rows+=kv('נטו למשק הבית אחרי הפרשות העובד לפנסיה ולקרן השתלמות','₪'+fmt(r.takeHome),'wrap');
   rows+=kv('נפשות בבית',r.persons)+kv('נפשות תקניות',r.std.toFixed(2).replace(/\.?0+$/,''))+kv('נטו לנפש תקנית','₪'+fmt(r.pc),'tot');
   $('#tbl').innerHTML=rows;
 }

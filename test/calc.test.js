@@ -148,3 +148,12 @@ test('take-home net subtracts employee pension and study fund regardless of sett
   near(cbs.takeHome, payslip.takeHome);
   near(payslip.total, payslip.takeHome);
 });
+
+test('index.html loads app.js with a version tag matching its content (cache busting)', () => {
+  const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
+  const root = path.join(__dirname, '..');
+  const hash = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, 'app.js'))).digest('hex').slice(0, 10);
+  const m = fs.readFileSync(path.join(root, 'index.html'), 'utf8').match(/src="app\.js\?v=([0-9a-f]+)"/);
+  assert.ok(m, 'index.html must load app.js?v=<hash>');
+  assert.equal(m[1], hash, 'app.js changed: run `npm run bump` to update the tag in index.html');
+});
