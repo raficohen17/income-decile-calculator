@@ -89,3 +89,22 @@ test('threshold adjustment scales all boundaries', () => {
   const r = c.calcHousehold(household({ adjPct: 10 }));
   near(r.thr[0], 3158 * 1.1);
 });
+
+test('study fund: employee 2.5% capped at the 15,712 ceiling, no effect on tax or net', () => {
+  const kids = {};
+  const without = c.calcPerson(adult({ salary: 20000 }), false, kids, 0);
+  const withSF = c.calcPerson(adult({ salary: 20000, study: true }), false, kids, 0);
+  near(withSF.study, 0.025 * 15712);
+  near(withSF.tax, without.tax);
+  near(withSF.net, without.net);
+  near(c.calcPerson(adult({ salary: 10000, study: true }), false, kids, 0).study, 250);
+  assert.equal(c.calcPerson(adult({ mode: 'net', salary: 10000, study: true }), false, kids, 0).study, 0);
+});
+
+test('study fund lowers total only when payslip deductions are on', () => {
+  const base = household({ adults: [adult({ salary: 10000, study: true }), adult({ gender: 'm', salary: 10000 })] });
+  const cbs = c.calcHousehold(base), payslip = c.calcHousehold(Object.assign({}, base, { deductPension: true }));
+  near(cbs.total, c.calcHousehold(household({ adults: [adult({ salary: 10000 }), adult({ gender: 'm', salary: 10000 })] })).total);
+  assert.equal(cbs.studySum, 250);
+  near(cbs.total - payslip.total, 1200 + 250);
+});
